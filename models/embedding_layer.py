@@ -3,7 +3,7 @@
 
 import numpy as np
 import torch
-import helper.logger as logger
+import hi_tin.helper.logger as logger
 from torch.nn.init import xavier_uniform_, kaiming_uniform_, xavier_normal_, kaiming_normal_, uniform_
 
 INIT_FUNC = {

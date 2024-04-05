@@ -2,11 +2,11 @@
 # coding:utf-8
 
 import os
-from models.structure_model.tree import Tree
+from ..models.structure_model.tree import Tree
 import json
 import copy
 from collections import defaultdict
-from helper.configure import Configure
+from .configure import Configure
 import sys
 
 ROOT_LABEL = 'Root'
@@ -39,6 +39,8 @@ class DatasetStatistic(object):
             self.init_prior_prob_dict[parent] = dict()
 
             for child in self.hierarchical_label_dict[parent]:
+                if child in self.label_trees.keys():
+                    pass
                 assert child not in self.label_trees.keys()
                 self.init_prior_prob_dict[parent][child] = 0
                 child_tree = Tree(child)
@@ -131,19 +133,24 @@ class DatasetStatistic(object):
         for sample in data:
             sample_flag = False
             sample = json.loads(sample)
-            sample_label = sample['label']
+            sample_label = sample['doc_label']
             all_label_num += len(sample_label)
-            doc_length_all += len(sample['token'])
+            doc_length_all += len(sample['doc_token'])
             # sample label : list of labels
             for label in sample_label:
                 path_flag = False
+                if label not in self.label_vocab:
+                    pass
                 assert label in self.label_vocab
                 level_num_dict[self.label_trees[label]._depth] += 1
                 if label in self.init_prior_prob_dict.keys():
                     # TODO: the children of Root node, need to be changed according to different corpus
                     # if label in ["CS", "Medical", "Civil", "ECE", "biochemistry", "MAE", "Psychology"]: # RCV1
                     # if label in ["Top/Features", "Top/Opinion", "Top/Classifieds", "Top/News"]: # NYT
-                    if label in ["CCAT", "ECAT", "GCAT", "MCAT"]:  # WOS
+                    # if label in ["CCAT", "ECAT", "GCAT", "MCAT"]:  # WOS
+                    if label in [
+                        "Appreciation encouragement", "Question", "Refused",
+                        "Rumors beliefs observations", "Sensitive or violent comment", "Suggestion request"]:
                         prob_dict[ROOT_LABEL][label] += 1
                         self.prior_prob_dict[ROOT_LABEL][label] += 1
                         if 'train' in file_name or 'val' in file_name:
@@ -158,10 +165,10 @@ class DatasetStatistic(object):
 
                 if label not in label_num_dict:
                     label_num_dict[label] = 1
-                    label_doc_len_dict[label] = len(sample['token'])
+                    label_doc_len_dict[label] = len(sample['doc_token'])
                 else:
                     label_num_dict[label] += 1
-                    label_doc_len_dict[label] += len(sample['token'])
+                    label_doc_len_dict[label] += len(sample['doc_token'])
 
                 if self.label_trees[label].num_children > 0 and not (sample_flag and path_flag):
                     # flag = False

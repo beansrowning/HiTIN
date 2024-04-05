@@ -2,7 +2,7 @@
 # coding: utf-8
 
 import torch
-from helper.utils import get_hierarchy_relations
+from ..helper.utils import get_hierarchy_relations
 
 
 class ClassificationLoss(torch.nn.Module):

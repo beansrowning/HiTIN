@@ -2,7 +2,7 @@
 # coding:utf-8
 import json
 import os
-import helper.logger as logger
+from . import logger as logger
 
 
 class Configure(object):

@@ -2,7 +2,7 @@
 
 import codecs
 import torch
-from models.structure_model.tree import Tree
+from hi_tin.models.structure_model.tree import Tree
 
 
 def load_checkpoint(model_file, model, config, optimizer=None):

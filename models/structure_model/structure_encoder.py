@@ -2,14 +2,14 @@
 # coding:utf-8
 
 import torch.nn as nn
-from models.structure_model.graphcnn import HierarchyGCN
-from models.structure_model.tree import Tree
+from .graphcnn import HierarchyGCN
+from .tree import Tree
 import json
 import os
 import numpy as np
-from helper.utils import get_hierarchy_relations
-from models.structure_model.weighted_tree_lstm import WeightedHierarchicalTreeLSTMEndtoEnd
-from models.structure_model.tin import TreeIsomorphismNetwork
+from hi_tin.helper.utils import get_hierarchy_relations
+from .weighted_tree_lstm import WeightedHierarchicalTreeLSTMEndtoEnd
+from .tin import TreeIsomorphismNetwork
 MODEL_MODULE = {
     'TreeLSTM': WeightedHierarchicalTreeLSTMEndtoEnd,
     'GCN': HierarchyGCN,

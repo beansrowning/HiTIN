@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # coding:utf-8
 
-from data_modules.dataset import ClassificationDataset
-from data_modules.collator import Collator
+from .dataset import ClassificationDataset
+from .collator import Collator
 from torch.utils.data import DataLoader
 
 import torch

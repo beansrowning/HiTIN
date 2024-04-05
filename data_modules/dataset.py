@@ -2,7 +2,7 @@
 # coding: utf-8
 
 from torch.utils.data.dataset import Dataset
-import helper.logger as logger
+from hi_tin import logger
 import json
 import os
 

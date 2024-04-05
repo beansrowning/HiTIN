@@ -3,7 +3,7 @@
 
 import pickle
 from collections import Counter
-import helper.logger as logger
+from hi_tin import logger
 import tqdm
 import os
 import json

@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 # coding:utf-8
-import helper.logger as logger
-from models.model import HiAGM
+from .helper import logger
+from .models.model import HiAGM
 import torch
-from helper.configure import Configure
+from .helper.configure import Configure
 import os
-from data_modules.data_loader import data_loaders
-from data_modules.vocab import Vocab
-from train_modules.criterions import ClassificationLoss
-from train_modules. trainer import Trainer
-from helper.utils import load_checkpoint, save_checkpoint
-from helper.arg_parser import get_args
+from .data_modules.data_loader import data_loaders
+from .data_modules.vocab import Vocab
+from .train_modules.criterions import ClassificationLoss
+from .train_modules. trainer import Trainer
+from .helper.utils import load_checkpoint, save_checkpoint
+from .helper.arg_parser import get_args
 
 import time
 import random
@@ -19,8 +19,8 @@ import pprint
 import warnings
 
 from transformers import BertTokenizer
-from helper.lr_schedulers import get_linear_schedule_with_warmup
-from helper.adamw import AdamW
+from .helper.lr_schedulers import get_linear_schedule_with_warmup
+from .helper.adamw import AdamW
 
 warnings.filterwarnings("ignore")
 

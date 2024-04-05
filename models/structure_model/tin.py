@@ -6,8 +6,8 @@ import numpy as np
 
 import sys
 sys.path.append("models/")
-from models.mlp import MLP
-import models.structure_model.CIRCA as CIRCA
+from ..mlp import MLP
+from . import CIRCA
 
 
 class TreeIsomorphismNetwork(nn.Module):
