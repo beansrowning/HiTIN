@@ -35,7 +35,7 @@ class HiAGM(nn.Module):
         self.vocab = vocab
         self.device = config.train.device_setting.device
 
-        self.token_map, self.label_map = vocab.v2i['token'], vocab.v2i['label']
+        self.token_map, self.label_map = vocab.v2i['doc_token'], vocab.v2i['doc_label']
 
         self.token_embedding = EmbeddingLayer(
             vocab_map=self.token_map,
@@ -57,7 +57,7 @@ class HiAGM(nn.Module):
             self.text_encoder = TextEncoder(config)
 
         self.structure_encoder = StructureEncoder(config=config,
-                                                  label_map=vocab.v2i['label'],
+                                                  label_map=vocab.v2i['doc_label'],
                                                   device=self.device,
                                                   graph_model_type=config.structure_encoder.type)
 
@@ -99,7 +99,7 @@ class HiAGM(nn.Module):
         """
 
         # get distributed representation of tokens, (batch_size, max_length, embedding_dimension)
-        embedding = self.token_embedding(batch['token'].to(self.config.train.device_setting.device))
+        embedding = self.token_embedding(batch['doc_token'].to(self.config.train.device_setting.device))
 
         # get the length of sequences for dynamic rnn, (batch_size, 1)
         seq_len = batch['token_len']
