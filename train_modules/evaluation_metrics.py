@@ -32,8 +32,8 @@ def evaluate(epoch_predicts, epoch_labels, vocab, threshold=0.5, top_k=None):
     Dict{'precision' -> Float, 'recall' -> Float, 'micro_f1' -> Float, 'macro_f1' -> Float}
     """
     assert len(epoch_predicts) == len(epoch_labels), 'mismatch between prediction and ground truth for evaluation'
-    label2id = vocab.v2i['label']
-    id2label = vocab.i2v['label']
+    label2id = vocab.v2i['doc_label']
+    id2label = vocab.i2v['doc_label']
     epoch_gold_label = list()
     # get id label name of ground truth
     for sample_labels in epoch_labels:

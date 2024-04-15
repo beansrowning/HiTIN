@@ -113,9 +113,9 @@ class ClassificationDataset(Dataset):
         :return: sample -> Dict{'token': List[int], 'label': List[int], 'token_len': int}
         """
         raw_sample = json.loads(sample_str)
-        sample = {'token': [], 'label': []}
+        sample = {'doc_token': [], 'doc_label': []}
         for k in raw_sample.keys():
-            if k == 'token':
+            if k == 'doc_token':
                 sample[k] = [self.vocab.v2i[k].get(v.lower(), self.vocab.oov_index) for v in raw_sample[k]]
 
                 if self.config.text_encoder.type == "bert":
@@ -130,14 +130,14 @@ class ClassificationDataset(Dataset):
                         logger.warning('Vocab not in ' + k + ' ' + v)
                     else:
                         sample[k].append(self.vocab.v2i[k][v])
-        if not sample['token']:
-            sample['token'].append(self.vocab.padding_index)
+        if not sample['doc_token']:
+            sample['doc_token'].append(self.vocab.padding_index)
         if self.mode == 'TRAIN':
-            assert sample['label'], 'Label is empty'
+            assert sample['doc_label'], 'Label is empty'
         else:
-            sample['label'] = [0]
-        sample['token_len'] = min(len(sample['token']), self.max_input_length)
-        padding = [self.vocab.padding_index for _ in range(0, self.max_input_length - len(sample['token']))]
-        sample['token'] += padding
-        sample['token'] = sample['token'][:self.max_input_length]
+            sample['doc_label'] = [0]
+        sample['token_len'] = min(len(sample['doc_token']), self.max_input_length)
+        padding = [self.vocab.padding_index for _ in range(0, self.max_input_length - len(sample['doc_token']))]
+        sample['doc_token'] += padding
+        sample['doc_token'] = sample['doc_token'][:self.max_input_length]
         return sample

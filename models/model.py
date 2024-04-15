@@ -99,7 +99,7 @@ class HiAGM(nn.Module):
         """
 
         # get distributed representation of tokens, (batch_size, max_length, embedding_dimension)
-        embedding = self.token_embedding(batch['doc_token'].to(self.config.train.device_setting.device))
+        embedding = self.token_embedding(batch['token'].to(self.config.train.device_setting.device))
 
         # get the length of sequences for dynamic rnn, (batch_size, 1)
         seq_len = batch['token_len']

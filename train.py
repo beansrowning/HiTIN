@@ -36,7 +36,7 @@ def set_optimizer(config, model):
         return torch.optim.Adam(lr=config.learning_rate,  # using args
             # lr=config.train.optimizer.learning_rate,
                                 params=params,
-                                weight_decay=args.l2rate)
+                                weight_decay=config.l2rate)
     else:
         raise TypeError("Recommend the Adam optimizer")
 
@@ -77,7 +77,7 @@ def train(config, args):
 
     # Define training objective & optimizer
     criterion = ClassificationLoss(os.path.join(config.data.data_dir, config.data.hierarchy),
-                                   corpus_vocab.v2i['label'],
+                                   corpus_vocab.v2i['doc_label'],
                                    # recursive_penalty=config.train.loss.recursive_regularization.penalty,
                                    recursive_penalty=args.hierar_penalty,  # using args
                                    recursive_constraint=config.train.loss.recursive_regularization.flag)
