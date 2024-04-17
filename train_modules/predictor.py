@@ -19,6 +19,7 @@ class Predictor(object):
         self.config = config
         self.device = config.train.device_setting.device
         self.flat_threshold = config.eval.threshold
+        self.top_k = config.eval.top_k
 
         # Build vocab (or load in pre-saved vocab)
         self.vocab = Vocab(config, min_freq=5, max_size=50000)
@@ -105,8 +106,11 @@ class Predictor(object):
         else:
             thresh = self.flat_threshold
 
+        # Take top-k labels by probability
         for samp in pred_proba:
-            y_pred.append(np.where(samp > thresh)[0].tolist())
+            predicted = np.where(samp > thresh)[0].tolist()
+            top_k = np.argpartition(-samp, self.top_k)[:self.top_k].tolist()
+            y_pred.append(list(set(predicted).intersection(top_k)))
 
         return (y_pred, y_true)
 
@@ -139,11 +143,12 @@ class Predictor(object):
         y_true = []
 
         # Evaluate test data batch by batch
-        for batch in self.data_loaders[dataset]:
-            logits = self.model(batch)
-            predict_results = torch.sigmoid(logits).cpu().tolist()
-            predict_probs.extend(predict_results)
-            y_true.extend(batch["label_list"])
+        with torch.no_grad():
+            for batch in self.data_loaders[dataset]:
+                logits = self.model(batch)
+                predict_results = torch.sigmoid(logits).cpu().tolist()
+                predict_probs.extend(predict_results)
+                y_true.extend(batch["label_list"])
 
         pred_prob_mat = np.array(predict_probs)
         return (pred_prob_mat, y_true)
