@@ -13,6 +13,8 @@ def get_args():
     parser.add_argument('-l2', '--l2rate', type=float, default=0,
                         help='L2 penalty lambda (default: 0.01)')
     parser.add_argument('-p', '--load_pretrained', default=False, action='store_true')
+    parser.add_argument("-s", "--seed", type=int, default=2024,
+                        help="RNG Seed for Training (default: 2024)")
     # TIN model
     parser.add_argument('-k', '--tree_depth', type=int, default=2,
                         help='The depth of coding tree to be constructed by CIRCA (default: 2)')

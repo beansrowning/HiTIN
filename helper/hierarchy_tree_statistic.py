@@ -100,11 +100,12 @@ class DatasetStatistic(object):
     def get_hierar_relations_with_name(taxo_file_dir):
         parent_child_dict = dict()
         label_vocab = []
-        f = open(taxo_file_dir, 'r')
-        relation_data = f.readlines()
-        f.close()
+
+        with open(taxo_file_dir, "r", encoding="utf-8") as f:
+            relation_data = f.readlines()
+
         for relation in relation_data:
-            # relation_list = relation.split()
+
             relation_list = relation.rstrip('\n').split('\t')
             parent, children = relation_list[0], relation_list[1:]
             assert parent not in parent_child_dict.keys()
@@ -117,9 +118,10 @@ class DatasetStatistic(object):
     def get_data_statistic(self, file_name):
         all_label_num = 0
         label_num_dict = dict()
-        f = open(file_name, 'r')
-        data = f.readlines()
-        f.close()
+
+        with open(file_name, "r", encoding="utf-8") as f:
+            data = f.readlines()
+
         count_data = len(data)
         sample_count_not_to_end = 0
         path_count_not_to_end = 0
@@ -139,18 +141,12 @@ class DatasetStatistic(object):
             # sample label : list of labels
             for label in sample_label:
                 path_flag = False
-                if label not in self.label_vocab:
-                    pass
                 assert label in self.label_vocab
                 level_num_dict[self.label_trees[label]._depth] += 1
                 if label in self.init_prior_prob_dict.keys():
-                    # TODO: the children of Root node, need to be changed according to different corpus
-                    # if label in ["CS", "Medical", "Civil", "ECE", "biochemistry", "MAE", "Psychology"]: # RCV1
-                    # if label in ["Top/Features", "Top/Opinion", "Top/Classifieds", "Top/News"]: # NYT
-                    # if label in ["CCAT", "ECAT", "GCAT", "MCAT"]:  # WOS
-                    if label in [
-                        "Appreciation encouragement", "Question", "Refused",
-                        "Rumors beliefs observations", "Sensitive or violent comment", "Suggestion request"]:
+                    # NOTE: This assumes "Root" is the highest entry in the taxonomy file
+                    # you'd need to modify otherwise
+                    if label in self.hierarchical_label_dict["Root"]:
                         prob_dict[ROOT_LABEL][label] += 1
                         self.prior_prob_dict[ROOT_LABEL][label] += 1
                         if 'train' in file_name or 'val' in file_name:
