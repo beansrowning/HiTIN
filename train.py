@@ -77,7 +77,7 @@ def train(config, args):
 
     # Define training objective & optimizer
     criterion = ClassificationLoss(os.path.join(config.data.data_dir, config.data.hierarchy),
-                                   corpus_vocab.v2i['doc_label'],
+                                   corpus_vocab.v2i['doc_label_list'],
                                    # recursive_penalty=config.train.loss.recursive_regularization.penalty,
                                    recursive_penalty=args.hierar_penalty,  # using args
                                    recursive_constraint=config.train.loss.recursive_regularization.flag)
