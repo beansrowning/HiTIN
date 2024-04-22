@@ -62,14 +62,14 @@ class StructureEncoder(nn.Module):
                                                         in_matrix=self.node_prob_from_child,
                                                         out_matrix=self.node_prob_from_parent,
                                                         # in_dim=config.structure_encoder.node.dimension,
-                                                        in_dim=config.hidden_dim,
-                                                        hidden_dim=config.hidden_dim,
+                                                        in_dim=config.structure_encoder.hidden_dim,
+                                                        hidden_dim=config.structure_encoder.hidden_dim,
                                                         out_dim=len(self.label_map),
-                                                        dropout=config.final_dropout,
+                                                        dropout=config.structure_encoder.final_dropout,
                                                         device=device,
-                                                        depth=config.tree_depth,
-                                                        num_mlp_layers=config.num_mlp_layers,
-                                                        tree_pooling_type=config.tree_pooling_type)
+                                                        depth=config.structure_encoder.tree_depth,
+                                                        num_mlp_layers=config.structure_encoder.num_mlp_layers,
+                                                        tree_pooling_type=config.structure_encoder.tree_pooling_type)
 
         else:
             self.model = MODEL_MODULE[graph_model_type](num_nodes=len(self.label_map),

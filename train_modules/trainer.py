@@ -87,7 +87,7 @@ class Trainer(object):
                                target_labels,
                                self.vocab,
                                # self.config.eval.threshold
-                               self.config.classification_threshold)  # using args
+                               self.config.eval.threshold)  # using args
             # metrics = {'precision': precision_micro,
             #             'recall': recall_micro,
             #             'micro_f1': micro_f1,

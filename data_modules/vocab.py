@@ -26,18 +26,18 @@ class Vocab(object):
         counter = Counter()
         self.config = config
         # counter for tokens
-        self.freqs = {'doc_token': counter.copy(), 'doc_label': counter.copy()}
+        self.freqs = {'doc_token': counter.copy(), 'doc_label_list': counter.copy()}
         # vocab to index
-        self.v2i = {'doc_token': dict(), 'doc_label': dict()}
+        self.v2i = {'doc_token': dict(), 'doc_label_list': dict()}
         # index to vocab
-        self.i2v = {'doc_token': dict(), 'doc_label': dict()}
+        self.i2v = {'doc_token': dict(), 'doc_label_list': dict()}
 
         self.min_freq = max(min_freq, 1)
         if not os.path.isdir(self.config.vocabulary.dir):
             os.system('mkdir ' + str(self.config.vocabulary.dir))
         token_dir = os.path.join(self.config.vocabulary.dir, self.config.data.dataset + '_' + self.config.vocabulary.vocab_dict)
         label_dir = os.path.join(self.config.vocabulary.dir, self.config.data.dataset + '_' + self.config.vocabulary.label_dict)
-        vocab_dir = {'doc_token': token_dir, 'doc_label': label_dir}
+        vocab_dir = {'doc_token': token_dir, 'doc_label_list': label_dir}
         if os.path.isfile(label_dir) and os.path.isfile(token_dir):
             logger.info('Loading Vocabulary from Cached Dictionary...')
             with open(token_dir, 'r', encoding="utf-8") as f_in:
@@ -50,8 +50,8 @@ class Vocab(object):
                 for i, line in enumerate(f_in):
                     data = line.rstrip().split('\t')
                     assert len(data) == 2
-                    self.v2i['doc_label'][data[0]] = i
-                    self.i2v['doc_label'][i] = data[0]
+                    self.v2i['doc_label_list'][data[0]] = i
+                    self.i2v['doc_label_list'][i] = data[0]
             for vocab in self.v2i.keys():
                 logger.info('Vocabulary of ' + vocab + ' ' + str(len(self.v2i[vocab])))
         else:

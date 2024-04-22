@@ -135,7 +135,7 @@ class DatasetStatistic(object):
         for sample in data:
             sample_flag = False
             sample = json.loads(sample)
-            sample_label = sample['doc_label']
+            sample_label = sample['doc_label_list']
             all_label_num += len(sample_label)
             doc_length_all += len(sample['doc_token'])
             # sample label : list of labels

@@ -19,7 +19,7 @@ def get_sample_position(corpus_filename, on_memory, corpus_lines, stage):
     sample_position = [0]
     if not on_memory:
         print('Loading files for ' + stage + ' Dataset...')
-        with open(corpus_filename, 'r') as f_in:
+        with open(corpus_filename, 'r', encoding = "utf-8") as f_in:
             sample_str = f_in.readline()
             while sample_str:
                 sample_position.append(f_in.tell())
@@ -75,7 +75,7 @@ class ClassificationDataset(Dataset):
             raise IndexError
         if not self.on_memory:
             position = self.sample_position[index]
-            with open(self.corpus_file) as f_in:
+            with open(self.corpus_file, encoding="utf-8") as f_in:
                 f_in.seek(position)
                 sample_str = f_in.readline()
         else:
@@ -113,8 +113,8 @@ class ClassificationDataset(Dataset):
         :return: sample -> Dict{'token': List[int], 'label': List[int], 'token_len': int}
         """
         raw_sample = json.loads(sample_str)
-        sample = {'doc_token': [], 'doc_label': []}
-        for k in raw_sample.keys():
+        sample = {'doc_token': [], 'doc_label_list': []}
+        for k in sample.keys():
             if k == 'doc_token':
                 sample[k] = [self.vocab.v2i[k].get(v.lower(), self.vocab.oov_index) for v in raw_sample[k]]
 
@@ -133,9 +133,9 @@ class ClassificationDataset(Dataset):
         if not sample['doc_token']:
             sample['doc_token'].append(self.vocab.padding_index)
         if self.mode == 'TRAIN':
-            assert sample['doc_label'], 'Label is empty'
+            assert sample['doc_label_list'], 'Label is empty'
         else:
-            sample['doc_label'] = [0]
+            sample['doc_label_list'] = [0]
         sample['token_len'] = min(len(sample['doc_token']), self.max_input_length)
         padding = [self.vocab.padding_index for _ in range(0, self.max_input_length - len(sample['doc_token']))]
         sample['doc_token'] += padding

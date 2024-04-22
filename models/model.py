@@ -35,7 +35,7 @@ class HiAGM(nn.Module):
         self.vocab = vocab
         self.device = config.train.device_setting.device
 
-        self.token_map, self.label_map = vocab.v2i['doc_token'], vocab.v2i['doc_label']
+        self.token_map, self.label_map = vocab.v2i['doc_token'], vocab.v2i['doc_label_list']
 
         self.token_embedding = EmbeddingLayer(
             vocab_map=self.token_map,
@@ -57,7 +57,7 @@ class HiAGM(nn.Module):
             self.text_encoder = TextEncoder(config)
 
         self.structure_encoder = StructureEncoder(config=config,
-                                                  label_map=vocab.v2i['doc_label'],
+                                                  label_map=vocab.v2i['doc_label_list'],
                                                   device=self.device,
                                                   graph_model_type=config.structure_encoder.type)
 

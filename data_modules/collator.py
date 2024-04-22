@@ -14,7 +14,7 @@ class Collator(object):
         super(Collator, self).__init__()
         self.config = config
         self.device = config.train.device_setting.device
-        self.label_size = len(vocab.v2i['doc_label'].keys())
+        self.label_size = len(vocab.v2i['doc_label_list'].keys())
 
     def _multi_hot(self, batch_labels):
         """
@@ -52,7 +52,7 @@ class Collator(object):
 
         for sample in batch:
             batch_token.append(sample['doc_token'])
-            batch_label.append(sample['doc_label'])
+            batch_label.append(sample['doc_label_list'])
             batch_doc_len.append(sample['token_len'])
 
             if self.config.text_encoder.type == "bert":

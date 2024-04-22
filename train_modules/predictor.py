@@ -132,7 +132,7 @@ class Predictor(object):
 
         self.lab_thresholds = cut_points
         self.lab_thresholds_dict = {
-            self.vocab.i2v["doc_label"][i]: v for i, v in enumerate(cut_points)
+            self.vocab.i2v["doc_label_list"][i]: v for i, v in enumerate(cut_points)
         }
 
     def run(self, dataset: str = "train") -> tuple[NDArray, list[list[int]]]:

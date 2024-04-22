@@ -33,10 +33,10 @@ def set_optimizer(config, model):
     """
     params = model.optimize_params_dict()
     if config.train.optimizer.type == 'Adam':
-        return torch.optim.Adam(lr=config.learning_rate,  # using args
+        return torch.optim.Adam(lr=config.train.optimizer.learning_rate,  # using args
             # lr=config.train.optimizer.learning_rate,
                                 params=params,
-                                weight_decay=config.l2rate)
+                                weight_decay=config.train.optimizer.lr_decay)
     else:
         raise TypeError("Recommend the Adam optimizer")
 
@@ -77,9 +77,9 @@ def train(config, args):
 
     # Define training objective & optimizer
     criterion = ClassificationLoss(os.path.join(config.data.data_dir, config.data.hierarchy),
-                                   corpus_vocab.v2i['doc_label'],
+                                   corpus_vocab.v2i['doc_label_list'],
                                    # recursive_penalty=config.train.loss.recursive_regularization.penalty,
-                                   recursive_penalty=args.hierar_penalty,  # using args
+                                   recursive_penalty=config.train.loss.recursive_regularization.penalty,  # using args
                                    recursive_constraint=config.train.loss.recursive_regularization.flag)
     if config.text_encoder.type == "bert":
         t_total = int(len(train_loader) * (config.train.end_epoch-config.train.start_epoch))
@@ -88,11 +88,11 @@ def train(config, args):
         no_decay = ['bias', 'LayerNorm.weight']
         grouped_parameters = [
             {'params': [p for n, p in param if 'bert' in n and not any(nd in n for nd in no_decay)],
-             'weight_decay': args.l2rate, 'lr': config.train.optimizer.learning_rate},
+             'weight_decay': config.train.optimizer.lr_decay, 'lr': config.train.optimizer.learning_rate},
             {'params': [p for n, p in param if 'bert' in n and any(nd in n for nd in no_decay)],
              'weight_decay': 0.0, 'lr': config.train.optimizer.learning_rate},
             {'params': [p for n, p in param if 'bert' not in n and not any(nd in n for nd in no_decay)],
-             'weight_decay': args.l2rate, 'lr': args.learning_rate},
+             'weight_decay': config.train.optimizer.lr_decay, 'lr': args.learning_rate},
             {'params': [p for n, p in param if 'bert' not in n and any(nd in n for nd in no_decay)],
              'weight_decay': 0.0, 'lr': args.learning_rate}
         ]
@@ -121,11 +121,10 @@ def train(config, args):
                 best_micro/macro-model_type-training_params_(tin_params)
                                             
     '''
-    # model_checkpoint = config.train.checkpoint.dir
-    model_checkpoint = os.path.join(args.ckpt_dir, args.begin_time + config.train.checkpoint.dir)  # using args
+    model_checkpoint = os.path.join(config.train.checkpoint.dir, time.strftime("%m%d_%H%M", time.localtime()))
     model_name = config.model.type
     if config.structure_encoder.type == "TIN":
-        model_name += '_' + str(args.tree_depth) + '_' + str(args.hidden_dim) + '_' + args.tree_pooling_type + '_' + str(args.final_dropout) + '_' + str(args.hierar_penalty)
+        model_name += '_' + str(config.structure_encoder.tree_depth) + '_' + str(config.structure_encoder.hidden_dim) + '_' + config.structure_encoder.tree_pooling_type + '_' + str(config.structure_encoder.final_dropout) + '_' + str(config.train.loss.recursive_regularization.penalty)
     wait = 0
     if not os.path.isdir(model_checkpoint):
         # os.mkdir(model_checkpoint)
