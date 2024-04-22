@@ -3,7 +3,7 @@
 import os
 import sys
 import logging
-import time 
+
 logging_level = {'debug': logging.DEBUG,
                  'info': logging.INFO,
                  'warning': logging.WARNING,
@@ -49,13 +49,13 @@ class Logger(object):
 
         self.log_dir = os.path.join(config.log_dir,
                                config.model.type + '-' + config.structure_encoder.type + '-' + config.text_encoder.type,
-                               config.data.dataset + '_' + str(config.train.batch_size) + '_' + str(
-                                   config.train.optimizer.learning_rate) + '_' + str(config.train.optimizer.lr_decay) + '_' + str(
-                                   config.eval.threshold) + '_' + str(config.train.loss.recursive_regularization.penalty))
+                               config.data.dataset + '_' + str(config.batch_size) + '_' + str(
+                                   config.learning_rate) + '_' + str(config.l2rate) + '_' + str(
+                                   config.classification_threshold) + '_' + str(config.hierar_penalty))
         if config.structure_encoder.type == "TIN":
-            self.log_file = os.path.join(self.log_dir, time.strftime("%m%d_%H%M_", time.localtime()) + str(config.structure_encoder.tree_depth) + '_' + str(config.structure_encoder.hidden_dim) + '_' + config.structure_encoder.tree_pooling_type + '_' + str(config.structure_encoder.final_dropout) + '.log')
+            self.log_file = os.path.join(self.log_dir, config.begin_time + str(config.tree_depth) + '_' + str(config.hidden_dim) + '_' + config.tree_pooling_type + '_' + str(config.final_dropout) + '.log')
         else:
-            self.log_file = os.path.join(config.log_dir, time.strftime("%m%d_%H%M_", time.localtime()) + config.log.filename)
+            self.log_file = os.path.join(config.log_dir, config.begin_time + config.log.filename)
         if not os.path.isdir(self.log_dir):
             os.makedirs(self.log_dir)
 
