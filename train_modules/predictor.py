@@ -49,10 +49,11 @@ class Predictor(object):
 
         # Init model
         self.model = HiAGM(
-            config, self.vocab, model_type=config.model.type, model_mode="EVAL"
+            config, self.vocab, model_type=config.model.type, model_mode="TEST"
         )
         self.model.load_state_dict(self.model_chkpt["state_dict"])
         self.model.to(self.device)
+        self.model.eval()
 
     @staticmethod
     def _get_model_checkpoint(ckpt_dir: os.PathLike, type: str = "macro") -> os.PathLike:
