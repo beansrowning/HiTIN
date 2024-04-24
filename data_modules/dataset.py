@@ -114,7 +114,7 @@ class ClassificationDataset(Dataset):
         """
         raw_sample = json.loads(sample_str)
         sample = {'doc_token': [], 'doc_label_list': []}
-        for k in sample.keys():
+        for k in raw_sample.keys():
             if k == 'doc_token':
                 sample[k] = [self.vocab.v2i[k].get(v.lower(), self.vocab.oov_index) for v in raw_sample[k]]
 
@@ -123,13 +123,16 @@ class ClassificationDataset(Dataset):
                     features = self.create_features(sentences, self.max_input_length)
                     for (features_k, features_v) in features.items():
                         sample[features_k] = features_v
-            else:
+            elif k =="doc_label_list":
                 sample[k] = []
                 for v in raw_sample[k]:
                     if v not in self.vocab.v2i[k].keys():
                         logger.warning('Vocab not in ' + k + ' ' + v)
                     else:
                         sample[k].append(self.vocab.v2i[k][v])
+            else:
+                # Pass thru as-is
+                sample[k] = raw_sample[k]
         if not sample['doc_token']:
             sample['doc_token'].append(self.vocab.padding_index)
         if self.mode == 'TRAIN':

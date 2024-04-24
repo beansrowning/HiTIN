@@ -41,7 +41,7 @@ def data_loaders(config, vocab, data={'train': None, 'val': None, 'test': None},
     test_dataset = ClassificationDataset(config, vocab, stage='TEST', on_memory=on_memory, corpus_lines=data['test'], tokenizer=tokenizer)
     test_loader = DataLoader(test_dataset,
                              batch_size=config.batch_size,  # using args
-                             shuffle=True,
+                             shuffle=False,
                              num_workers=config.train.device_setting.num_workers,
                              collate_fn=collate_fn,
                              pin_memory=False,

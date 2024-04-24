@@ -87,16 +87,19 @@ class Predictor(object):
         return thres[optim_idx]
 
     def predict(
-        self, dataset: str = "test", optimized_thresholds: bool = True
-    ) -> tuple[list[list[int]], list[list[int]]]:
+        self, dataset: str = "test", optimized_thresholds: bool = True, return_input: bool = False
+    ) -> tuple[list[list[int]], list[list[int]]] | tuple[list[str], list[list[str]], list[list[str]]]:
         """
         Run prediction on the specified dataset (almost assuredly "test")
         using computed label thresholds on the validation set
         :param dataset: one of "test", "train", "validation"
         :param optimized_thresholds: Use label-optimized cutpoints (True), or a flat cutpoint when determining label assignments (False)
-        :return: A tuple: y_pred, y_true, both list[list[int]] containing the predicted and true label values for each sample in `dataset`
+        :return: 
+            A tuple: y_pred, y_true, both list[list[int]] containing the predicted and true label values for each sample in `dataset` if return_input is False
+            or
+            A tuple: input_text, y_pred, y_true, all list[str] with y_pred and y_true back-transformed from their integer encoding
         """
-        pred_proba, y_true = self.run(dataset)
+        input_text, pred_proba, y_true = self.run(dataset, return_input=True)
 
         y_pred = []
 
@@ -113,7 +116,14 @@ class Predictor(object):
             top_k = np.argpartition(-samp, self.top_k)[:self.top_k].tolist()
             y_pred.append(list(set(predicted).intersection(top_k)))
 
-        return (y_pred, y_true)
+        if return_input:
+            # back-xform integers to text
+            y_pred = [[self.vocab.i2v["doc_label_list"][i] for i in sample] for sample in y_pred]
+            y_true = [[self.vocab.i2v["doc_label_list"][i] for i in sample] for sample in y_true]
+            # Return along with input text
+            return (input_text, y_pred, y_true)
+        else:
+            return (y_pred, y_true)
 
     def compute_label_thresholds(self):
         """
@@ -136,13 +146,13 @@ class Predictor(object):
             self.vocab.i2v["doc_label_list"][i]: v for i, v in enumerate(cut_points)
         }
 
-    def run(self, dataset: str = "train") -> tuple[NDArray, list[list[int]]]:
+    def run(self, dataset: str = "train", return_input: bool = False) -> tuple[NDArray, list[list[int]]] | tuple[list[str], NDArray, list[list[int]]]:
         """
         Returns predictions from the model using the specified dataset
         """
         predict_probs = []
         y_true = []
-
+        x = []
         # Evaluate test data batch by batch
         with torch.no_grad():
             for batch in self.data_loaders[dataset]:
@@ -150,6 +160,11 @@ class Predictor(object):
                 predict_results = torch.sigmoid(logits).cpu().tolist()
                 predict_probs.extend(predict_results)
                 y_true.extend(batch["label_list"])
+                if return_input:
+                    x.extend(batch["input_text"])
 
         pred_prob_mat = np.array(predict_probs)
+
+        if return_input:
+            return ( x, pred_prob_mat, y_true )
         return (pred_prob_mat, y_true)

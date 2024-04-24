@@ -44,13 +44,14 @@ class Collator(object):
         batch_token = []
         batch_label = []
         batch_doc_len = []
-
+        batch_text = []
         batch_input_ids = []
         batch_input_mask = []
         batch_segment_ids = []
         batch_input_len = []
 
         for sample in batch:
+            batch_text.append(sample['doc_text'])
             batch_token.append(sample['doc_token'])
             batch_label.append(sample['doc_label_list'])
             batch_doc_len.append(sample['token_len'])
@@ -75,6 +76,7 @@ class Collator(object):
             'label': batch_multi_hot_label,
             'token_len': batch_doc_len,
             'label_list': batch_label,
+            'input_text': batch_text,
             'input_ids': batch_input_ids,
             'input_mask': batch_input_mask,
             'segment_ids': batch_segment_ids,
