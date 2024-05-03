@@ -65,12 +65,9 @@ class Predictor(object):
         if not os.path.isdir(ckpt_dir):
             return None
         else:
-            dir_list = [dir.path for dir in os.scandir(ckpt_dir) if dir.is_dir()]
-            dir_list.sort(key=lambda fn: os.path.getatime(fn))
-
             file_list = [
                 file.path
-                for file in os.scandir(dir_list[0])
+                for file in os.scandir(ckpt_dir)
                 if file.name.startswith(f"best_{type}")
             ]
 
