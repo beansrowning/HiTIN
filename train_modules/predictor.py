@@ -1,13 +1,15 @@
 import os
+from itertools import chain
 
 import numpy as np
+import numpy.ma as ma
 import torch
 import transformers
 from numpy.typing import ArrayLike, NDArray
 from sklearn.metrics import roc_curve
 
 from hi_tin import Configure, HiAGM, Vocab, data_loaders
-
+from hi_tin.models.structure_model.tree import Tree 
 
 class Predictor(object):
     def __init__(self, config: Configure, checkpoint_type: str = "macro"):
@@ -84,43 +86,109 @@ class Predictor(object):
         return thres[optim_idx]
 
     def predict(
-        self, dataset: str = "test", optimized_thresholds: bool = True, return_input: bool = False
+        self, dataset: str = "test", optimized_thresholds: bool = True, label_output: str = "flat", back_transform: bool = False, return_input: bool = False
     ) -> tuple[list[list[int]], list[list[int]]] | tuple[list[str], list[list[str]], list[list[str]]]:
         """
         Run prediction on the specified dataset (almost assuredly "test")
         using computed label thresholds on the validation set
         :param dataset: one of "test", "train", "validation"
-        :param optimized_thresholds: Use label-optimized cutpoints (True), or a flat cutpoint when determining label assignments (False)
+        :param optimized_thresholds: Use label-optimized cutpoints (True), or a flat cutpoint when determining label assignments (False) (only observed if label_output == "flat")
+        :param label_output: How to reconstruct the label(s), "flat" which returns top-k in a hierarchy naive way, "bottom_up" which re-constructs the hierarchy from the argmaxed leafnode prediction, or "top_down" which performs a masked argmax at each level of the hierarchy
+        :param back_transform: Should integer labels be back-transformed to their plain-text descriptions?
+        :param return input: Should input (X) be returned as plain-text as the first item?
         :return: 
             A tuple: y_pred, y_true, both list[list[int]] containing the predicted and true label values for each sample in `dataset` if return_input is False
             or
             A tuple: input_text, y_pred, y_true, all list[str] with y_pred and y_true back-transformed from their integer encoding
         """
+
+        output_opts = ["bottom_up", "top_down", "flat"]
+        assert label_output in output_opts, f"output format must be one of: {str(output_opts)}, recieved {label_output}"
+
         input_text, pred_proba, y_true = self.run(dataset, return_input=True)
 
         y_pred = []
 
         # Either length 1 or m (number of labels)
-        if optimized_thresholds:
+        if optimized_thresholds and label_output == "flat":
+            # We only need this in the circumstance that
+            # we're preforming "flat" label predictions
             self.compute_label_thresholds()
             thresh = self.lab_thresholds
         else:
-            thresh = self.flat_threshold
+            thresh = [self.flat_threshold] * pred_proba.shape[1]
+
+        # Identify leaf nodes
+        parents = [elem for elem in self.model.structure_encoder.hierarchical_label_dict.keys()]
+        children = [[elem for elem in elems] for elems in self.model.structure_encoder.hierarchical_label_dict.values()]
+        leafs = list(set(chain(*children)).difference(set(parents)))
 
         # Take top-k labels by probability
         for samp in pred_proba:
-            predicted = np.where(samp > thresh)[0].tolist()
-            top_k = np.argpartition(-samp, self.top_k)[:self.top_k].tolist()
-            y_pred.append(list(set(predicted).intersection(top_k)))
+            samp_labels = []
+            if label_output == "bottom_up":
+                # Just argmax one of the terminal (leaf) nodes
+                # and re-compose the full label from there
+                samp_masked = ma.masked_array(samp, mask=[0 if i in leafs else 1 for i in range(samp.shape[0])])
+                leaf_pred_idx = samp_masked.argmax()
+                samp_labels = self._recompose_label_bottom_up(leaf_pred_idx, self.model.structure_encoder.label_trees)
+            elif label_output == "top_down":
+                samp_labels = self._recompose_label_top_down(samp, self.model.structure_encoder.hierarchical_label_dict)
+            else:
+                # take top-k (which may or may not be in the correct hierarchy)
+                samp_masked = ma.masked_where(samp <= thresh, samp)
+                samp_labels = np.argsort(-samp_masked)[:self.top_k].tolist()
 
-        if return_input:
+            y_pred.append(samp_labels)
+        if back_transform:
             # back-xform integers to text
             y_pred = [[self.vocab.i2v["doc_label_list"][i] for i in sample] for sample in y_pred]
             y_true = [[self.vocab.i2v["doc_label_list"][i] for i in sample] for sample in y_true]
             # Return along with input text
-            return (input_text, y_pred, y_true)
+
+        if return_input:
+            (input_text, y_pred, y_true)
         else:
             return (y_pred, y_true)
+
+    @staticmethod
+    def _recompose_label_top_down(sample_probs: np.array, label_dict: dict[int, list[int]]) -> list[int]:
+        out = []
+        # -1 is root node
+        parent = -1
+
+        while True:
+            try:
+                children = label_dict[parent]
+            except:
+                break
+            # Mask array to only possible decendants of parent label and argmax
+            samp_masked = ma.masked_array(sample_probs, mask=[0 if i in children else 1 for i in range(sample_probs.shape[0])])
+            child = samp_masked.argmax()
+            out.append(child)
+            # Child becomes new parent
+            parent = child
+        
+        return(out)
+
+    @staticmethod
+    def _recompose_label_bottom_up(label_idx: int, label_tree: Tree) -> list[int]:
+        full_label = []
+        full_label.append(label_idx)
+        while True:
+            try:
+                lab_tree = label_tree[full_label[-1] + 1]
+                parent = lab_tree.parent.idx
+            except:
+                break
+            # If we're at the top level, stop traversing
+            if parent == -1:
+                break
+            full_label.append(parent)
+        # We re-built from bottom up, so we have to reverse to get in the right order
+        full_label.reverse()
+
+        return(full_label)
 
     def compute_label_thresholds(self):
         """
