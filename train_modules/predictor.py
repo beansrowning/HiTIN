@@ -174,8 +174,11 @@ class Predictor(object):
                 [self.vocab.i2v["doc_label_list"][i] for i in sample]
                 for sample in y_true
             ]
-            # Return along with input text
 
+            if label_output != "flat":
+                y_pred = ["/".join(labs) for labs in y_pred]
+                y_true = ["/".join(labs) for labs in y_true]
+        # Return along with input text
         if return_input:
             (input_text, y_pred, y_true)
         else:
