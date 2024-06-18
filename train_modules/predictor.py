@@ -131,33 +131,13 @@ class Predictor(object):
         else:
             thresh = [self.flat_threshold] * pred_proba.shape[1]
 
-        # Identify leaf nodes
-        parents = [
-            elem for elem in self.model.structure_encoder.hierarchical_label_dict.keys()
-        ]
-        children = [
-            [elem for elem in elems]
-            for elems in self.model.structure_encoder.hierarchical_label_dict.values()
-        ]
-        leafs = list(set(chain(*children)).difference(set(parents)))
-
         # Take top-k labels by probability
         for samp in pred_proba:
             samp_labels = []
             if label_output == "bottom_up":
-                # Just argmax one of the terminal (leaf) nodes
-                # and re-compose the full label from there
-                samp_masked = ma.masked_array(
-                    samp, mask=[0 if i in leafs else 1 for i in range(samp.shape[0])]
-                )
-                leaf_pred_idx = samp_masked.argmax()
-                samp_labels = self._recompose_label_bottom_up(
-                    leaf_pred_idx, self.model.structure_encoder.label_trees
-                )
+                samp_labels = self._recompose_label_bottom_up(samp)
             elif label_output == "top_down":
-                samp_labels = self._recompose_label_top_down(
-                    samp, self.model.structure_encoder.hierarchical_label_dict
-                )
+                samp_labels = self._recompose_label_top_down(samp)
             else:
                 # take top-k (which may or may not be in the correct hierarchy)
                 samp_masked = ma.masked_where(samp <= thresh, samp)
@@ -184,10 +164,13 @@ class Predictor(object):
         else:
             return (y_pred, y_true)
 
-    @staticmethod
-    def _recompose_label_top_down(
-        sample_probs: np.array, label_dict: dict[int, list[int]]
-    ) -> list[int]:
+    def _recompose_label_top_down(self, sample_probs: np.array) -> list[int]:
+        """
+        Recompose full hierarchical label from the highest level of the hierarchy to the lowest
+        conditioning the prediction at each lower level of the hierarhy on the previous level to
+        ensure total label is valid
+        """
+        label_dict = self.model.structure_encoder.hierarchical_label_dict
         out = []
         # -1 is root node
         parent = -1
@@ -209,10 +192,33 @@ class Predictor(object):
 
         return out
 
-    @staticmethod
-    def _recompose_label_bottom_up(label_idx: int, label_tree: Tree) -> list[int]:
+    def _recompose_label_bottom_up(self, samp: np.array) -> list[int]:
+        """
+        Recompose full hierarchical label from the lowest level of the hierarchy to the highest
+        ensuring that final label consists of only descendants of predicted leaf node (and thus, is valid)
+        """
+        # Identify leaf nodes
+        parents = [
+            elem for elem in self.model.structure_encoder.hierarchical_label_dict.keys()
+        ]
+        children = [
+            [elem for elem in elems]
+            for elems in self.model.structure_encoder.hierarchical_label_dict.values()
+        ]
+
+        leafs = list(set(chain(*children)).difference(set(parents)))
+
+        # Mask to only the leaf nodes and argmax to begin
+        samp_masked = ma.masked_array(
+            samp, mask=[0 if i in leafs else 1 for i in range(samp.shape[0])]
+        )
+        label_idx = samp_masked.argmax()
+
+        label_tree = self.model.structure_encoder.label_trees
+
         full_label = []
         full_label.append(label_idx)
+
         while True:
             try:
                 lab_tree = label_tree[full_label[-1] + 1]
