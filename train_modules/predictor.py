@@ -58,10 +58,7 @@ class Predictor(object):
         self.model.to(self.device)
         self.model.eval()
 
-    @staticmethod
-    def _get_model_checkpoint(
-        ckpt_dir: os.PathLike, type: str = "macro"
-    ) -> os.PathLike:
+    def _get_model_checkpoint(self, ckpt_dir: os.PathLike, type: str = "macro") -> os.PathLike:
         """
         Dumb helper to return the path of the latest model checkpoint file
         :param ckpt_dir: The root checkpoint folder, usually defined in the config file
@@ -73,7 +70,7 @@ class Predictor(object):
             file_list = [
                 file.path
                 for file in os.scandir(ckpt_dir)
-                if file.name.startswith(f"best_{type}")
+                if file.name.startswith(f"best_{type}_{self.config.model.type}")
             ]
 
         return file_list[0]
