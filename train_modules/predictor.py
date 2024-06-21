@@ -111,9 +111,6 @@ class Predictor(object):
         """
 
         output_opts = ["bottom_up", "top_down", "flat"]
-        assert (
-            label_output in output_opts
-        ), f"output format must be one of: {str(output_opts)}, recieved {label_output}"
 
         input_text, pred_proba, y_true = self.run(dataset, return_input=True)
 
@@ -135,10 +132,12 @@ class Predictor(object):
                 samp_labels = self._recompose_label_bottom_up(samp)
             elif label_output == "top_down":
                 samp_labels = self._recompose_label_top_down(samp)
-            else:
+            elif label_output == "flat":
                 # take top-k (which may or may not be in the correct hierarchy)
                 samp_masked = ma.masked_where(samp <= thresh, samp)
                 samp_labels = np.argsort(-samp_masked)[: self.top_k].tolist()
+            else:
+                raise ValueError(f"Output format must be one of: {str(output_opts)}, recieved {label_output}")
 
             y_pred.append(samp_labels)
         if back_transform:
