@@ -1,5 +1,6 @@
 import os
 from itertools import chain
+from typing import Union
 
 import numpy as np
 import numpy.ma as ma
@@ -93,8 +94,7 @@ class Predictor(object):
         back_transform: bool = False,
         return_input: bool = False,
     ) -> (
-        tuple[list[list[int]], list[list[int]]]
-        | tuple[list[str], list[list[str]], list[list[str]]]
+        Union[tuple[list[list[int]], list[list[int]]], tuple[list[str], list[list[str]], list[list[str]]]]
     ):
         """
         Run prediction on the specified dataset (almost assuredly "test")
@@ -253,7 +253,7 @@ class Predictor(object):
 
     def run(
         self, dataset: str = "train", return_input: bool = False
-    ) -> tuple[NDArray, list[list[int]]] | tuple[list[str], NDArray, list[list[int]]]:
+    ) -> Union[tuple[NDArray, list[list[int]]], tuple[list[str], NDArray, list[list[int]]]]:
         """
         Returns predictions from the model using the specified dataset
         """
