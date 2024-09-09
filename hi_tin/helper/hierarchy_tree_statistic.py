@@ -27,16 +27,20 @@ class DatasetStatistic(object):
         self.hierarchical_label_dict, self.label_vocab = self.get_hierar_relations_with_name(
             os.path.join(config.data.data_dir, config.data.hierarchy))
         self.level = 0
+        self.to_traverse = [ROOT_LABEL]
         self.level_dict = dict()
         self.init_prior_prob_dict = dict()
 
         # build tree structure for treelstm
-        for parent in list(self.hierarchical_label_dict.keys()):
+        while len(self.to_traverse):
+            parent = self.to_traverse.pop()
             print(self.label_trees.keys())
             print(parent)
             assert parent in self.label_trees.keys()
             parent_tree = self.label_trees[parent]
             self.init_prior_prob_dict[parent] = dict()
+            # Add all children of label as next label to traverse
+            self.to_traverse.extend(self.hierarchical_label_dict[parent])
 
             for child in self.hierarchical_label_dict[parent]:
                 if child in self.label_trees.keys():
