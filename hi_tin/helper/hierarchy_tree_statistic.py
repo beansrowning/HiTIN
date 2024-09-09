@@ -34,14 +34,15 @@ class DatasetStatistic(object):
         # build tree structure for treelstm
         while len(self.to_traverse):
             parent = self.to_traverse.pop()
-            print(self.label_trees.keys())
-            print(parent)
             assert parent in self.label_trees.keys()
             parent_tree = self.label_trees[parent]
             self.init_prior_prob_dict[parent] = dict()
             # Add all children of label as next label to traverse
-            self.to_traverse.extend(self.hierarchical_label_dict[parent])
-
+            try:
+                self.to_traverse.extend(self.hierarchical_label_dict[parent])
+            except KeyError:
+                # We're at leaf node, move on
+                continue
             for child in self.hierarchical_label_dict[parent]:
                 if child in self.label_trees.keys():
                     pass
