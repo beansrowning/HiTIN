@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding:utf-8
-from .helper import logger
+from .helper.logger import Logger
 from .models.model import HiAGM
 import torch
 from .helper.configure import Configure
@@ -17,6 +17,7 @@ import random
 import numpy as np
 import pprint
 import warnings
+import logging
 
 from transformers import BertTokenizer
 from .helper.lr_schedulers import get_linear_schedule_with_warmup
@@ -24,6 +25,7 @@ from .helper.adamw import AdamW
 
 warnings.filterwarnings("ignore")
 
+logger = logging.getLogger(__name__)
 
 def set_optimizer(config, model):
     """
@@ -32,11 +34,15 @@ def set_optimizer(config, model):
     :return: torch.optim
     """
     params = model.optimize_params_dict()
-    if config.train.optimizer.type == 'Adam':
-        return torch.optim.Adam(lr=config.learning_rate,  # using args
-            # lr=config.train.optimizer.learning_rate,
-                                params=params,
-                                weight_decay=config.l2rate)
+    if config.train.optimizer.type == "Adam":
+        return torch.optim.Adam(lr=config.train.optimizer.learning_rate,
+                                params=params)
+    elif config.train.optimizer.type == "AdamW":
+        return torch.optim.AdamW(
+            lr=config.train.optimizer.learning_rate,
+            params=params,
+            weight_decay=config.train.optimizer.weight_decay
+        )
     else:
         raise TypeError("Recommend the Adam optimizer")
 
@@ -62,24 +68,11 @@ def train(config, args):
 
     hiagm.to(config.train.device_setting.device)
 
-    # Code for counting parameters
-    # from thop import clever_format
-    # print(hiagm)
-    # def count_parameters(model):
-    #     total = sum(p.numel() for p in model.parameters())
-    #     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    #     return total, trainable
-    #
-    # total_params, trainable_params = count_parameters(hiagm)
-    # total_params, trainable_params = clever_format([total_params, trainable_params], "%.4f")
-    # print("Total num of parameters: {}. Trainable parameters: {}".format(total_params, trainable_params))
-    # sys.exit()
-
     # Define training objective & optimizer
     criterion = ClassificationLoss(os.path.join(config.data.data_dir, config.data.hierarchy),
                                    corpus_vocab.v2i['doc_label_list'],
                                    # recursive_penalty=config.train.loss.recursive_regularization.penalty,
-                                   recursive_penalty=args.hierar_penalty,  # using args
+                                   recursive_penalty=config.train.loss.recursive_regularization.penalty,  # using args
                                    recursive_constraint=config.train.loss.recursive_regularization.flag)
     if config.text_encoder.type == "bert":
         t_total = int(len(train_loader) * (config.train.end_epoch-config.train.start_epoch))
@@ -88,13 +81,13 @@ def train(config, args):
         no_decay = ['bias', 'LayerNorm.weight']
         grouped_parameters = [
             {'params': [p for n, p in param if 'bert' in n and not any(nd in n for nd in no_decay)],
-             'weight_decay': args.l2rate, 'lr': config.train.optimizer.learning_rate},
+             'weight_decay': config.train.optimizer.weight_decay, 'lr': config.train.optimizer.learning_rate},
             {'params': [p for n, p in param if 'bert' in n and any(nd in n for nd in no_decay)],
              'weight_decay': 0.0, 'lr': config.train.optimizer.learning_rate},
             {'params': [p for n, p in param if 'bert' not in n and not any(nd in n for nd in no_decay)],
-             'weight_decay': args.l2rate, 'lr': args.learning_rate},
+             'weight_decay': config.train.optimizer.weight_decay, 'lr': config.train.optimizer.learning_rate},
             {'params': [p for n, p in param if 'bert' not in n and any(nd in n for nd in no_decay)],
-             'weight_decay': 0.0, 'lr': args.learning_rate}
+             'weight_decay': 0.0, 'lr': config.train.optimizer.learning_rate}
         ]
         warmup_steps = int(t_total * 0.1)
         optimizer = AdamW(grouped_parameters, eps=1e-8)
@@ -128,7 +121,6 @@ def train(config, args):
         model_name += '_' + str(args.tree_depth) + '_' + str(args.hidden_dim) + '_' + args.tree_pooling_type + '_' + str(args.final_dropout) + '_' + str(args.hierar_penalty)
     wait = 0
     if not os.path.isdir(model_checkpoint):
-        # os.mkdir(model_checkpoint)
         os.makedirs(model_checkpoint)
     elif args.load_pretrained:
         # loading previous checkpoint
@@ -198,15 +190,6 @@ def train(config, args):
                 'optimizer': optimizer.state_dict()
             }, os.path.join(model_checkpoint, 'best_macro_' + model_name))
 
-        # if epoch % 10 == 1:
-        #     save_checkpoint({
-        #         'epoch': epoch,
-        #         'model_type': config.model.type,
-        #         'state_dict': hiagm.state_dict(),
-        #         'best_performance': best_performance,
-        #         'optimizer': optimize.state_dict()
-        #     }, os.path.join(model_checkpoint, model_name + '_epoch_' + str(epoch)))
-
         logger.info('Epoch {} Time Cost {} secs.'.format(epoch, time.time() - start_time))
 
 
@@ -252,10 +235,6 @@ if __name__ == "__main__":
         torch.backends.cudnn.benchmark = False
     torch.multiprocessing.set_start_method('spawn')
 
-    logger.Logger(configs)
+    Logger(configs)
 
-    # if not os.path.isdir(configs.train.checkpoint.dir):
-    #     os.mkdir(configs.train.checkpoint.dir)
-
-    # train(config)
     train(configs, args)

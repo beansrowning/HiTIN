@@ -8,7 +8,7 @@ with open("README.md", encoding="utf-8") as readme_file:
 
 setup(
     name='HiTIN',
-    version='0.1.20240909-1',
+    version='0.1.20241002',
     description='A packaged version of the HiTIN model implemented by Zhu et al.',
     long_description=readme,
     long_description_content_type="text/markdown",
