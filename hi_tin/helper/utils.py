@@ -49,28 +49,37 @@ def get_hierarchy_relations(hierar_taxonomy, label_map, root=None, fortree=False
     label_tree[0] = root
     hierar_relations = {}
     with codecs.open(hierar_taxonomy, "r", "utf8") as f:
-        for line in f:
-            line_split = line.rstrip().split('\t')
-            parent_label, children_label = line_split[0], line_split[1:]
-            if parent_label not in label_map:
-                if fortree and parent_label == 'Root':
-                    parent_label_id = -1
-                else:
-                    continue
-            else:
-                parent_label_id = label_map[parent_label]
-            children_label_ids = [label_map[child_label] \
-                                  for child_label in children_label if child_label in label_map]
-            hierar_relations[parent_label_id] = children_label_ids
-            if fortree:
-                assert (parent_label_id + 1) in label_tree
+        relation_data = f.readlines()
+    for relation in relation_data:
+        line_split = relation.rstrip().split('\t')
+        parent_label, children_label = line_split[0], line_split[1:]
+        assert parent_label not in hierar_relations.keys()
+
+        # Add idx to hierar relations dictionary
+        if parent_label == "Root":
+            parent_label_id = -1
+        else:
+            parent_label_id = label_map[parent_label]
+        child_label_ids = [label_map[lab] for lab in children_label]
+        hierar_relations[parent_label_id] = child_label_ids
+
+        if fortree:
+            try:
+                parent_tree = label_tree[parent_label_id + 1]
+            except KeyError:
+                # Parent not observed yet
+                label_tree[parent_label_id + 1] = Tree(parent_label_id)
                 parent_tree = label_tree[parent_label_id + 1]
 
-                for child in children_label_ids:
-                    assert (child + 1) not in label_tree
-                    child_tree = Tree(child)
-                    parent_tree.add_child(child_tree)
-                    label_tree[child + 1] = child_tree
+            for child in child_label_ids:
+                try:
+                    child_tree = label_tree[child + 1]
+                except KeyError:
+                    # child not observed yet
+                    label_tree[child + 1] = Tree(child)
+                    child_tree = label_tree[child + 1]
+
+                parent_tree.add_child(child_tree)
     if fortree:
         return hierar_relations, label_tree
     else:
