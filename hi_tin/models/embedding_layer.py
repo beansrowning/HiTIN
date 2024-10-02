@@ -43,7 +43,7 @@ class EmbeddingLayer(torch.nn.Module):
         :param activation_type: None
         """
         super(EmbeddingLayer, self).__init__()
-        self.dropout = torch.nn.Dropout(p=config['embedding'][vocab_name]['dropout'])
+        self.dropout = torch.nn.Dropout(p=getattr(config.embedding, vocab_name).dropout)
         self.embedding = torch.nn.Embedding(len(vocab_map), embedding_dim, padding_index)
 
         # initialize lookup table
@@ -64,7 +64,7 @@ class EmbeddingLayer(torch.nn.Module):
                                                         a=-0.25,
                                                         b=0.25)
 
-        if model_mode == 'TRAIN' and config['embedding'][vocab_name]['type'] == 'pretrain' \
+        if model_mode == 'TRAIN' and getattr(config.embedding, vocab_name).type == 'pretrain' \
                 and pretrained_dir is not None and pretrained_dir != '':
             self.load_pretrained(embedding_dim, vocab_map, vocab_name, pretrained_dir)
 
