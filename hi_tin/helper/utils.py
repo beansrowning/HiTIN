@@ -29,7 +29,7 @@ def get_checkpoint_name(config) -> str:
     model_name = config.model.type
 
     model_name += "_" + "_".join([
-        config.text_encoder,
+        config.text_encoder.type,
         str(config.train.optimizer.learning_rate),
         str(config.train.optimizer.lr_decay),
         str(config.train.optimizer.lr_patience),
