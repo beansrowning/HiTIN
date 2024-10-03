@@ -22,6 +22,31 @@ def load_checkpoint(model_file, model, config, optimizer=None):
         optimizer.load_state_dict(checkpoint_model['optimizer'])
     return best_performance, config
 
+def get_checkpoint_name(config) -> str:
+    """
+    From a config, return a checkpoint name
+    """
+    model_name = config.model.type
+
+    model_name += "_" + "_".join([
+        config.text_encoder,
+        str(config.train.optimizer.learning_rate),
+        str(config.train.optimizer.lr_decay),
+        str(config.train.optimizer.lr_patience),
+        str(config.train.optimizer.weight_decay),
+    ])
+
+    if config.structure_encoder.type == "TIN":
+        model_name += "_" + "_".join([
+            str(config.structure_encoder.tree_depth),
+            str(config.structure_encoder.hidden_dim),
+            config.structure_encoder.tree_pooling_type,
+            str(config.structure_encoder.final_dropout),
+            str(config.train.loss.recursive_regularization.penalty)
+        ])
+    
+    return model_name
+
 
 def save_checkpoint(state, model_file):
     """

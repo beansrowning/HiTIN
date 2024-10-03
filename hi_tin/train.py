@@ -9,7 +9,7 @@ from .data_modules.data_loader import data_loaders
 from .data_modules.vocab import Vocab
 from .train_modules.criterions import ClassificationLoss
 from .train_modules. trainer import Trainer
-from .helper.utils import load_checkpoint, save_checkpoint
+from .helper.utils import load_checkpoint, save_checkpoint, get_checkpoint_name
 from .helper.arg_parser import get_args
 
 import time
@@ -110,15 +110,14 @@ def train(config, args):
     best_performance = [0.0, 0.0]
     '''
         ckpt_dir
-            begin-time_dataset_model
-                best_micro/macro-model_type-training_params_(tin_params)
+            best_micro/macro-model_type-training_params_(tin_params)
                                             
     '''
     # model_checkpoint = config.train.checkpoint.dir
-    model_checkpoint = os.path.join(args.ckpt_dir, args.begin_time + config.train.checkpoint.dir)  # using args
-    model_name = config.model.type
-    if config.structure_encoder.type == "TIN":
-        model_name += '_' + str(args.tree_depth) + '_' + str(args.hidden_dim) + '_' + args.tree_pooling_type + '_' + str(args.final_dropout) + '_' + str(args.hierar_penalty)
+    model_checkpoint = config.train.checkpoint.dir  # using args
+
+    # Model name for checkpoint
+    model_name = get_checkpoint_name(config)
     wait = 0
     if not os.path.isdir(model_checkpoint):
         os.makedirs(model_checkpoint)

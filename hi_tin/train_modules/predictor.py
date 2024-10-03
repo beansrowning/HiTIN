@@ -12,6 +12,8 @@ from sklearn.metrics import roc_curve
 from hi_tin import Configure, HiAGM, Vocab, data_loaders
 from hi_tin.models.structure_model.tree import Tree
 
+from ..helper.utils import get_checkpoint_name
+
 
 class Predictor(object):
     def __init__(self, config: Configure, checkpoint_type: str = "macro"):
@@ -65,13 +67,15 @@ class Predictor(object):
         :param ckpt_dir: The root checkpoint folder, usually defined in the config file
         :param type: either 'macro' or 'micro', specifying type of checkpoint if there's more than one
         """
+        model_name = get_checkpoint_name(self.config)
+
         if not os.path.isdir(ckpt_dir):
             return None
         else:
             file_list = [
                 file.path
                 for file in os.scandir(ckpt_dir)
-                if file.name.startswith(f"best_{type}_{self.config.model.type}")
+                if file.name.startswith(f"best_{type}_{model_name}")
             ]
 
         return file_list[0]
