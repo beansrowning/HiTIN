@@ -127,7 +127,7 @@ def train(config, args):
         dir_list.sort(key=lambda fn: os.path.getatime(os.path.join(model_checkpoint, fn)))
         latest_model_file = ''
         for model_file in dir_list[::-1]:  # best or latest ckpt
-            if model_file.ends_with(model_name):
+            if model_file.endswith(model_name):
                 latest_model_file = model_file
                 break
             else:
