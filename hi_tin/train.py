@@ -127,11 +127,11 @@ def train(config, args):
         dir_list.sort(key=lambda fn: os.path.getatime(os.path.join(model_checkpoint, fn)))
         latest_model_file = ''
         for model_file in dir_list[::-1]:  # best or latest ckpt
-            if model_file.startswith('best'):
-                continue
-            else:
+            if model_file.ends_with(model_name):
                 latest_model_file = model_file
                 break
+            else:
+                continue
         if os.path.isfile(os.path.join(model_checkpoint, latest_model_file)):
             logger.info('Loading Previous Checkpoint...')
             logger.info('Loading from {}'.format(os.path.join(model_checkpoint, latest_model_file)))
@@ -141,6 +141,8 @@ def train(config, args):
                                                        optimizer=optimizer)
             logger.info('Previous Best Performance---- Micro-F1: {}%, Macro-F1: {}%'.format(
                 best_performance[0], best_performance[1]))
+        else:
+            logger.error(f"`load_pretrained` was selected, but could not find checkpoint that matched current model parameters: {model_name}\nSearched: {model_checkpoint}")
 
     for epoch in range(config.train.start_epoch, config.train.end_epoch):
         start_time = time.time()
